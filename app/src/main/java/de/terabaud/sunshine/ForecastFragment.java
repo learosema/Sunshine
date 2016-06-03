@@ -2,9 +2,11 @@ package de.terabaud.sunshine;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.text.format.Time;
@@ -63,7 +65,7 @@ public class ForecastFragment extends Fragment {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
             FetchWeatherTask task = new FetchWeatherTask();
-            task.execute("26871,de");
+            task.execute();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -96,12 +98,17 @@ public class ForecastFragment extends Fragment {
         });
 
         FetchWeatherTask task = new FetchWeatherTask();
-        task.execute("26871,de");
+        task.execute();
         return rootView;
     }
 
     public class FetchWeatherTask extends AsyncTask<String, Integer, String[]> {
 
+        private String getLocation() {
+            Context ctx = getActivity();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
+            return prefs.getString(getString(R.string.location_key), "26871,de");
+        }
 
         /* The date/time conversion code is going to be moved outside the asynctask later,
          * so for convenience we're breaking it out into its own method now.
@@ -201,10 +208,10 @@ public class ForecastFragment extends Fragment {
 
         @Override
         protected String[] doInBackground(String... params) {
-            String postalCode = params[0];
+            String location = getLocation();
             String apiKey = "e26cb73612d30fb64f84c4d22d42f241";
             Uri u = Uri.parse("http://api.openweathermap.org/data/2.5/forecast/daily?").buildUpon()
-                    .appendQueryParameter("q", postalCode)
+                    .appendQueryParameter("q", location)
                     .appendQueryParameter("mode", "json")
                     .appendQueryParameter("units", "metric")
                     .appendQueryParameter("cnt", "7")
